@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  # 1. PostgreSQL Service
+  citizenreport-postgres:
+    image: 'postgres:15-alpine'
+    container_name: citizenreport-postgres
+    ports:
+      # Maps the container's 5432 to the host's 5432 (so you can access it locally if needed)
+      - '5432:5432'
+    environment:
+      # These variables must match the values used in your application.properties
+      POSTGRES_DB: citizenreport
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    # Optional: Use a named volume to persist your data even if you stop/remove the container
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # 2. Spring Boot Backend Service (you'll set this up later)
+  backend-app:
+    # This tells Docker how to build the image from your backend code
+    build:
+      context: .  # Path to your backend folder (where the pom.xml is)
+      dockerfile: ./Dockerfile # The name of the Dockerfile (you need to create this next)
+    container_name: backend-app
+    ports:
+      # Expose the application port (default Spring Boot is 8080)
+      - '8080:8080'
+    environment:
+      # Connection to the DB uses the service name 'citizenreport-postgres'
+      SPRING_DATASOURCE_URL: jdbc:postgresql://citizenreport-postgres:5432/citizenreport
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_MAIL_HOST: maildev
+      SPRING_MAIL_PORT: 1025
+      SPRING_MAIL_USERNAME: ""
+      SPRING_MAIL_PASSWORD: ""
+    # Ensures the database is up and ready before starting the app
+    depends_on:
+      - citizenreport-postgres
+    # Optional: If you need to debug with IntelliJ, use this:
+    # command: java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -jar /app/app.jar
+  # Dummy SMTP Server for Spring Boot
+  maildev:
+    image: maildev/maildev
+    container_name: maildev
+    ports:
+      - "1080:1080" # Web UI
+      - "1025:1025" # SMTP port
+
+
+
+volumes:
+  postgres-data:
+
+
