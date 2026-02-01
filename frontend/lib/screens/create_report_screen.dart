@@ -7,6 +7,8 @@ import 'package:latlong2/latlong.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
 
+
+
 class CreateReportScreen extends StatefulWidget {
   final LatLng initialPos;
   const CreateReportScreen({super.key, required this.initialPos});
@@ -88,9 +90,10 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                   color: Colors.grey[200],
                   child: _photo == null
                       ? const Center(child: Icon(Icons.camera_alt, size: 50))
-                      : (kIsWeb 
-                          ? Image.network(_photo!.path, fit: BoxFit.cover) 
-                          : Image.file(File(_photo!.path), fit: BoxFit.cover)),
+                      : (kIsWeb
+                  // FIX: Use network image for Web blob URLs
+                      ? Image.network(_photo!.path, fit: BoxFit.cover)
+                      : Image.file(File(_photo!.path), fit: BoxFit.cover)),
                 ),
               ),
 
@@ -106,15 +109,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     );
   }
 }
-/* lib/screens/create_report_screen.dart
-import 'dart:io';
-import 'package:flutter/foundation.dart' hide Category;// For kIsWeb
-import 'package:flutter/material.dart' hide Category;
-import 'package:image_picker/image_picker.dart';
-import 'package:latlong2/latlong.dart';
-import '../models/models.dart';
-import '../services/api_service.dart';
-
+/*
 class CreateReportScreen extends StatefulWidget {
   final LatLng initialPos;
   const CreateReportScreen({super.key, required this.initialPos});
@@ -153,9 +148,9 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     );
     setState(() => _isLoading = false);
 
-    if (success) {
+    if (success && mounted) {
       Navigator.pop(context);
-    } else {
+    } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to create report")));
     }
   }
@@ -196,7 +191,9 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                   color: Colors.grey[200],
                   child: _photo == null
                       ? const Center(child: Icon(Icons.camera_alt, size: 50))
-                      : Image.file(File(_photo!.path), fit: BoxFit.cover),
+                      : (kIsWeb
+                          ? Image.network(_photo!.path, fit: BoxFit.cover)
+                          : Image.file(File(_photo!.path), fit: BoxFit.cover)),
                 ),
               ),
 
