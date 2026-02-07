@@ -36,6 +36,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _locateUser();
   }
+  void _onMapTap(TapPosition tapPosition, LatLng point) async {
+    // Navigate to Create Screen using the TAPPED location
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => CreateReportScreen(initialPos: point))
+    );
+    _loadReports(); // Refresh map immediately after returning
+  }
 
   Future<void> _locateUser() async {
     // Basic permission check (add permission_handler logic for prod)
@@ -76,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: FlutterMap(
         mapController: _mapController,
-        options: MapOptions(initialCenter: _currentPos, initialZoom: 14),
+        options: MapOptions(initialCenter: _currentPos, initialZoom: 14, onTap: _onMapTap,),
         children: [
           TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
           MarkerLayer(

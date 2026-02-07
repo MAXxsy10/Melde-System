@@ -97,7 +97,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/static/**",
 
             "/api/auth/**",
-            "/api/reports/**",
+            //"/api/reports/**",
             "/ws/**",
             "/uploads/**"
     );

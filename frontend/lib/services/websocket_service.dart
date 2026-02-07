@@ -7,6 +7,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 
 class WebSocketService {
+  static final WebSocketService _instance = WebSocketService._internal();
+    factory WebSocketService() => _instance;
+    WebSocketService._internal();
   StompClient? _client;
   final _storage = const FlutterSecureStorage();
 
