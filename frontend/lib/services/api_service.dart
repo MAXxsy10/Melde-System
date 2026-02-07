@@ -35,7 +35,7 @@ class ApiService {
     ));
   }
 
-  // --- AUTH ---
+  // AUTH
   Future<AuthResponse?> login(String email, String password) async {
     // We let the UI handle the error (try/catch block in UI)
     final response = await _dio.post('/auth/login', data: {
@@ -46,7 +46,6 @@ class ApiService {
   }
 
   Future<AuthResponse?> register(String email, String password, String nickname) async {
-    // Removed try/catch so the actual error propagates to the UI
     final response = await _dio.post('/auth/register', data: {
       'email': email,
       'password': password,
@@ -98,7 +97,7 @@ class ApiService {
     return User.fromJson(response.data['data']);
   }
 
-  // --- REPORTS ---
+  //  REPORTS
   Future<List<Report>> getReports({double? lat, double? lng, int? radius, bool? myReports, bool? helping}) async {
     final Map<String, dynamic> query = {};
     if (lat != null && lng != null) {
@@ -130,7 +129,6 @@ class ApiService {
     });
 
     if (photo != null) {
-      // FIX: Use bytes for Web compatibility
       if (kIsWeb) {
         formData.files.add(MapEntry(
           'photo',
@@ -154,7 +152,6 @@ class ApiService {
   }
 
   Future<bool> joinReport(int id) async {
-    // Removed try/catch so UI can show "Anonymous users cannot join" error
     final response = await _dio.post('/reports/$id/join');
     return response.data['success'] == true;
   }
@@ -165,7 +162,7 @@ class ApiService {
     return list.map((e) => ReportHistory.fromJson(e)).toList();
   }
 
-  // --- CHAT ---
+  // CHAT
   Future<List<ChatMessage>> getChatMessages(int reportId) async {
     final currentUserId = await getCurrentUserId();
     if (currentUserId == null) return [];

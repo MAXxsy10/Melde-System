@@ -14,13 +14,10 @@ import java.util.List;
 @Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
-    // Alle Nachrichten eines Reports
     List<ChatMessage> findByReportOrderBySentAtAsc(Report report);
 
-    // Nachrichten eines Reports mit Paginierung
     Page<ChatMessage> findByReportOrderBySentAtDesc(Report report, Pageable pageable);
 
-    // Neueste Nachrichten seit einem Zeitpunkt
     @Query("SELECT cm FROM ChatMessage cm WHERE cm.report = :report " +
             "AND cm.sentAt > :since ORDER BY cm.sentAt ASC")
     List<ChatMessage> findRecentMessages(

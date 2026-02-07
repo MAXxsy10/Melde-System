@@ -88,7 +88,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider tokenProvider;
     private final CustomUserDetailsService userDetailsService;
 
-    // öffentliche Pfade, die der Filter überspringen soll
     private static final List<String> PUBLIC_PATHS = List.of(
             "/",
             "/error",
@@ -138,15 +137,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    // Filter komplett überspringen für definierte öffentliche Pfade & OPTIONS
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
-        // OPTIONS Requests überspringen (CORS preflight)
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
-        // Wenn one of the PUBLIC_PATHS matched -> skip filter
         return PUBLIC_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 }

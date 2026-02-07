@@ -21,7 +21,6 @@ public class WebSocketNotificationService {
 
     public void notifyNewReport(Report report) {
         try {
-            // Sende Broadcast über /topic/reports
             var notification = new java.util.HashMap<String, Object>();
             notification.put("type", "NEW_REPORT");
             notification.put("reportId", report.getId());

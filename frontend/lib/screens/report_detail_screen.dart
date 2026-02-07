@@ -7,7 +7,7 @@ import '../services/api_service.dart';
 import 'chat_screen.dart';
 
 // lib/screens/report_detail_screen.dart
-import 'package:dio/dio.dart'; // Import Dio
+import 'package:dio/dio.dart';
 
 class ReportDetailScreen extends StatefulWidget {
   final int reportId;
@@ -52,7 +52,6 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
         _loadData();
       }
     } on DioException catch (e) {
-      // FIX: Show why joining failed (e.g., Anonymous user)
       String msg = "Could not join report";
       if (e.response != null && e.response!.data is Map) {
         msg = e.response!.data['message'] ?? msg;
@@ -69,7 +68,6 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
 
     final bool canChat = _report!.currentUserIsHelper || (_report!.currentUserIsCreator == true);
 
-    // FIX: Dynamic Base URL for Images
     final String baseUrl = kIsWeb ? 'http://localhost:8080' : 'http://10.0.2.2:8080';
 
     return Scaffold(

@@ -18,20 +18,15 @@ import java.util.Optional;
 @Repository
 public interface HelperRepository extends JpaRepository<Helper, Long> {
 
-    // Prüfen ob User bereits bei Report hilft
     Boolean existsByReportAndUser(Report report, User user);
 
-    // Alle Helfer eines Reports
     List<Helper> findByReport(Report report);
 
-    // Alle Reports bei denen ein User hilft
     @Query("SELECT h.report FROM Helper h WHERE h.user = :user")
     Page<Report> findReportsByUser(@Param("user") User user, Pageable pageable);
 
-    // Helfer-Eintrag finden
     Optional<Helper> findByReportAndUser(Report report, User user);
 
-    // Anzahl der Helfer für einen Report
     Integer countByReport(Report report);
 }
 

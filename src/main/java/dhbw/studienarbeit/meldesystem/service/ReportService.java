@@ -41,13 +41,11 @@ public class ReportService {
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         }
 
-        // Foto hochladen (falls vorhanden)
         String photoUrl = null;
         if (photo != null && !photo.isEmpty()) {
             photoUrl = fileStorageService.storeFile(photo);
         }
 
-        // Reverse Geocoding falls Adresse fehlt
         if (request.getCity() == null || request.getStreet() == null) {
             LocationDTO geocodedLocation = geocodingService.reverseGeocode(
                     request.getLatitude(),
@@ -58,7 +56,6 @@ public class ReportService {
             if (request.getPostalCode() == null) request.setPostalCode(geocodedLocation.getPostalCode());
         }
 
-        // Report erstellen
         Report report = Report.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -77,10 +74,8 @@ public class ReportService {
 
         report = reportRepository.save(report);
 
-        // Historie-Eintrag erstellen
         createHistoryEntry(report, ReportStatus.NEW, "System", "Report wurde erstellt");
 
-        // Behörde benachrichtigen
         try {
             authorityDispatcherService.notifyAuthority(report);
             createHistoryEntry(report, ReportStatus.AUTHORITY_NOTIFIED, "System",
@@ -89,7 +84,6 @@ public class ReportService {
             log.error("Failed to notify authority for report {}", report.getId(), e);
         }
 
-        // WebSocket-Benachrichtigung an Nutzer in der Nähe
         notificationService.notifyNewReport(report);
 
         log.info("Report created successfully with ID: {}", report.getId());
@@ -115,19 +109,16 @@ public class ReportService {
         Page<Report> reportPage;
 
         if (params.getMyReports() != null && params.getMyReports()) {
-            // Eigene Reports
             User user = userRepository.findById(currentUserId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             reportPage = reportRepository.findByCreatedBy(user, pageable);
 
         } else if (params.getHelpingReports() != null && params.getHelpingReports()) {
-            // Reports wo User hilft
             User user = userRepository.findById(currentUserId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             reportPage = helperRepository.findReportsByUser(user, pageable);
 
         } else if (params.getLatitude() != null && params.getLongitude() != null) {
-            // Geospatial Suche
             Integer radius = params.getRadius() != null ? params.getRadius() : 10; // Default 10km
             List<Report> reports = reportRepository.findReportsWithinRadiusPageable(
                     params.getLatitude(),
@@ -137,7 +128,6 @@ public class ReportService {
                     params.getPage() * params.getSize()
             );
 
-            // Manuelles Paging da native Query
             long total = reportRepository.findReportsWithinRadius(
                     params.getLatitude(), params.getLongitude(), radius
             ).size();
@@ -156,7 +146,6 @@ public class ReportService {
                     .build();
 
         } else {
-            // Filter-basierte Suche
             reportPage = reportRepository.findByFilters(
                     params.getCategory(),
                     params.getStatus(),
@@ -200,11 +189,9 @@ public class ReportService {
 
         helperRepository.save(helper);
 
-        // Historie-Eintrag
         createHistoryEntry(report, ReportStatus.HELPER_FOUND, user.getNickname(),
                 user.getNickname() + " hat sich als Helfer gemeldet");
 
-        // WebSocket-Benachrichtigung
         notificationService.notifyHelperJoined(report, user);
 
         Integer totalHelpers = helperRepository.countByReport(report);
@@ -225,7 +212,6 @@ public class ReportService {
 
         createHistoryEntry(report, newStatus, changedBy, comment);
 
-        // WebSocket-Benachrichtigung
         notificationService.notifyStatusUpdate(report);
     }
 

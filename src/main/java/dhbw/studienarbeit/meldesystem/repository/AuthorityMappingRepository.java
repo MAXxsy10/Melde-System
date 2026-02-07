@@ -13,7 +13,6 @@ import java.util.Optional;
 @Repository
 public interface AuthorityMappingRepository extends JpaRepository<AuthorityMapping, Long> {
 
-    // Zuständige Behörde finden
     @Query("SELECT am FROM AuthorityMapping am WHERE am.category = :category " +
             "AND (am.postalCode IS NULL OR am.postalCode = :postalCode) " +
             "ORDER BY am.postalCode DESC NULLS LAST")
@@ -22,7 +21,6 @@ public interface AuthorityMappingRepository extends JpaRepository<AuthorityMappi
             @Param("postalCode") String postalCode
     );
 
-    // Erste passende Behörde
     @Query("SELECT am FROM AuthorityMapping am WHERE am.category = :category " +
             "AND (am.postalCode IS NULL OR am.postalCode = :postalCode) " +
             "ORDER BY am.postalCode DESC NULLS LAST LIMIT 1")
@@ -31,6 +29,5 @@ public interface AuthorityMappingRepository extends JpaRepository<AuthorityMappi
             @Param("postalCode") String postalCode
     );
 
-    // Alle Behörden einer Kategorie
     List<AuthorityMapping> findByCategory(Category category);
 }

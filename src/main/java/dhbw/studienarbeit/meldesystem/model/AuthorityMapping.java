@@ -21,7 +21,7 @@ public class AuthorityMapping {
     private Category category;
 
     @Column(name = "postal_code")
-    private String postalCode; // Optional: spezifisch für PLZ
+    private String postalCode;
 
     @Column(nullable = false)
     private String authorityName;
@@ -29,7 +29,7 @@ public class AuthorityMapping {
     @Column(nullable = false)
     private String authorityEmail;
 
-    private String apiEndpoint; // Optional: für REST-API Integration
+    private String apiEndpoint;
 
-    private String apiKey; // Optional
+    private String apiKey;
 }

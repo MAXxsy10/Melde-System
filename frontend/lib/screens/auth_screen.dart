@@ -1,9 +1,5 @@
-// lib/screens/auth_screen.dart
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import 'home_screen.dart';
-// lib/screens/auth_screen.dart
-import 'package:dio/dio.dart'; // Import Dio for error handling
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,185 +7,139 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _AuthScreenState extends State<AuthScreen> {
+  bool _isLogin = true;
+  final _formKey = GlobalKey<FormState>();
+  String _email = '';
+  String _password = '';
+  String _nickname = '';
+  bool _isLoading = false;
   final ApiService _api = ApiService();
 
-  final _emailCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
-  final _nickCtrl = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  void _navigateHome() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
-  }
-
   Future<void> _submit() async {
-    final email = _emailCtrl.text;
-    final pass = _passCtrl.text;
-    final nick = _nickCtrl.text;
+    if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
+    setState(() => _isLoading = true);
 
-    try {
-      if (_tabController.index == 0) {
-        // Login
-        await _api.login(email, pass);
-        _navigateHome();
-      } else {
-        // Register
-        await _api.register(email, pass, nick);
-        _navigateHome();
-      }
-    } on DioException catch (e) {
-      // Show the actual error message from backend
-      String msg = "Action failed";
-      if (e.response != null && e.response!.data is Map) {
-        msg = e.response!.data['message'] ?? msg;
-      }
-      _showError(msg);
-    } catch (e) {
-      _showError("An unexpected error occurred");
-    }
-  }
-
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: Colors.red,
-    ));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Melde-System'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [Tab(text: 'Login'), Tab(text: 'Register')],
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
-            TextField(controller: _passCtrl, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
-
-            AnimatedBuilder(
-              animation: _tabController,
-              builder: (ctx, _) => _tabController.index == 1
-                  ? TextField(controller: _nickCtrl, decoration: const InputDecoration(labelText: 'Nickname'))
-                  : const SizedBox.shrink(),
-            ),
-
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: _submit, child: const Text('Submit')),
-            TextButton(
-              onPressed: () async {
-                if (await _api.loginAnonymous() != null) _navigateHome();
-              },
-              child: const Text('Continue Anonymously'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-/*
-class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
-  @override
-  State<AuthScreen> createState() => _AuthScreenState();
-}
-
-class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final ApiService _api = ApiService();
-
-  final _emailCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
-  final _nickCtrl = TextEditingController(); // For register
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  void _navigateHome() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
-  }
-
-  Future<void> _submit() async {
-    final email = _emailCtrl.text;
-    final pass = _passCtrl.text;
-    final nick = _nickCtrl.text;
-
-    if (_tabController.index == 0) {
-      // Login
-      final res = await _api.login(email, pass);
-      if (res != null) _navigateHome();
-      else _showError("Login failed");
+    dynamic response;
+    if (_isLogin) {
+      response = await _api.login(_email, _password);
     } else {
-      // Register
-      final res = await _api.register(email, pass, nick);
-      if (res != null) _navigateHome();
-      else _showError("Registration failed");
+      response = await _api.register(_email, _password, _nickname);
     }
-  }
 
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    setState(() => _isLoading = false);
+
+    if (response != null && mounted) {
+      Navigator.pushReplacementNamed(context, '/home');
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_isLogin ? "Login Failed" : "Registration Failed")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Using the theme colors we set in main.dart
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Melde-System'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [Tab(text: 'Login'), Tab(text: 'Register')],
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
-            TextField(controller: _passCtrl, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
+      // No AppBar, just a clean background
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo or Icon
+              Icon(Icons.shield_outlined, size: 80, color: primaryColor),
+              const SizedBox(height: 20),
+              Text(
+                "Citizen Report",
+                style: TextStyle(
+                  fontSize: 28, 
+                  fontWeight: FontWeight.bold, 
+                  color: primaryColor
+                ),
+              ),
+              const SizedBox(height: 40),
 
-            // Only show Nickname field if on Register tab
-            AnimatedBuilder(
-              animation: _tabController,
-              builder: (ctx, _) => _tabController.index == 1
-                  ? TextField(controller: _nickCtrl, decoration: const InputDecoration(labelText: 'Nickname'))
-                  : const SizedBox.shrink(),
-            ),
-
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: _submit, child: const Text('Submit')),
-            TextButton(
-              onPressed: () async {
-                if (await _api.loginAnonymous() != null) _navigateHome();
-              },
-              child: const Text('Continue Anonymously'),
-            ),
-          ],
+              // --- THE "FRAME" (Card) ---
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    )
+                  ],
+                ),
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      Text(
+                        _isLogin ? "Welcome Back" : "Create Account",
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) => v!.contains('@') ? null : 'Invalid email',
+                        onSaved: (v) => _email = v!,
+                      ),
+                      const SizedBox(height: 16),
+                      if (!_isLogin) ...[
+                        TextFormField(
+                          decoration: const InputDecoration(labelText: 'Nickname', prefixIcon: Icon(Icons.person_outline)),
+                          validator: (v) => v!.isEmpty ? 'Required' : null,
+                          onSaved: (v) => _nickname = v!,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      TextFormField(
+                        decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outline)),
+                        obscureText: true,
+                        validator: (v) => v!.length < 6 ? 'Min 6 chars' : null,
+                        onSaved: (v) => _password = v!,
+                      ),
+                      const SizedBox(height: 30),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _submit,
+                          child: _isLoading 
+                            ? const CircularProgressIndicator(color: Colors.white) 
+                            : Text(_isLogin ? "Login" : "Register"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () => setState(() => _isLogin = !_isLogin),
+                child: Text(_isLogin ? "Create new account" : "I already have an account"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await _api.loginAnonymous();
+                  if (mounted) Navigator.pushReplacementNamed(context, '/home');
+                },
+                child: const Text("Continue as Guest"),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}*/
+}

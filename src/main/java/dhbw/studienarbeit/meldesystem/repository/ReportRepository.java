@@ -14,7 +14,6 @@ import java.util.List;
 @Repository
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
-    // Geospatial Suche - Reports in der Nähe
     @Query(value = """
         SELECT * FROM reports r 
         WHERE (6371 * acos(cos(radians(:lat)) * cos(radians(r.latitude)) 
@@ -29,7 +28,6 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             @Param("radius") Integer radius
     );
 
-    // Geospatial Suche mit Paginierung
     @Query(value = """
         SELECT * FROM reports r 
         WHERE (6371 * acos(cos(radians(:lat)) * cos(radians(r.latitude)) 
@@ -47,13 +45,10 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             @Param("offset") Integer offset
     );
 
-    // Nach Kategorie filtern
     Page<Report> findByCategory(Category category, Pageable pageable);
 
-    // Nach Status filtern
     Page<Report> findByStatus(ReportStatus status, Pageable pageable);
 
-    // Kombinierte Filter
     @Query("SELECT r FROM Report r WHERE " +
             "(:category IS NULL OR r.category = :category) AND " +
             "(:status IS NULL OR r.status = :status)")
@@ -63,13 +58,10 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             Pageable pageable
     );
 
-    // Reports eines bestimmten Users
     Page<Report> findByCreatedBy(User user, Pageable pageable);
 
-    // Reports in bestimmter PLZ
     List<Report> findByPostalCode(String postalCode);
 
-    // Neueste Reports für Push-Benachrichtigungen
     @Query("SELECT r FROM Report r WHERE r.createdAt > :since ORDER BY r.createdAt DESC")
     List<Report> findRecentReports(@Param("since") java.time.LocalDateTime since);
 }

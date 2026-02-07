@@ -13,10 +13,8 @@ import java.util.Optional;
 @Repository
 public interface ReportHistoryRepository extends JpaRepository<ReportHistory, Long> {
 
-    // Historie eines Reports sortiert nach Timestamp
     List<ReportHistory> findByReportOrderByTimestampDesc(Report report);
 
-    // Letzter Status-Eintrag
     @Query("SELECT rh FROM ReportHistory rh WHERE rh.report = :report " +
             "ORDER BY rh.timestamp DESC LIMIT 1")
     Optional<ReportHistory> findLatestByReport(@Param("report") Report report);

@@ -69,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _logout() {
     _api.logout();
-    Navigator.of(context).pushReplacementNamed('/'); // Back to Auth
+    Navigator.of(context).pushReplacementNamed('/');
   }
 
   @override
