@@ -24,29 +24,30 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Report> _reports = [];
   LatLng _currentPos = const LatLng(49.0069, 8.4037); // Default Karlsruhe
 
+  // NEU: Variable für den aktuellen Radius (Standard: 20 km)
+  double _currentRadius = 20.0;
+
   @override
   void initState() {
     super.initState();
     _ws.connect();
     _ws.reportUpdates.listen((data) {
-      // Refresh map when a new report notification comes in
       _loadReports();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("New Report nearby!")));
     });
 
     _locateUser();
   }
+
   void _onMapTap(TapPosition tapPosition, LatLng point) async {
-    // Navigate to Create Screen using the TAPPED location
     await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => CreateReportScreen(initialPos: point))
+        context,
+        MaterialPageRoute(builder: (_) => CreateReportScreen(initialPos: point))
     );
-    _loadReports(); // Refresh map immediately after returning
+    _loadReports();
   }
 
   Future<void> _locateUser() async {
-    // Basic permission check (add permission_handler logic for prod)
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -62,8 +63,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // GEÄNDERT: Nutzt nun die Variable _currentRadius statt der festen 20
   Future<void> _loadReports() async {
-    final reports = await _api.getReports(lat: _currentPos.latitude, lng: _currentPos.longitude, radius: 20);
+    final reports = await _api.getReports(
+        lat: _currentPos.latitude,
+        lng: _currentPos.longitude,
+        radius: _currentRadius.toInt() // Hier wird der dynamische Wert übergeben
+    );
     setState(() => _reports = reports);
   }
 
@@ -82,23 +88,63 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(icon: const Icon(Icons.exit_to_app), onPressed: _logout),
         ],
       ),
-      body: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(initialCenter: _currentPos, initialZoom: 14, onTap: _onMapTap,),
+      body: Stack(
         children: [
-          TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-          MarkerLayer(
-            markers: _reports.map((report) => Marker(
-              point: LatLng(report.location.latitude, report.location.longitude),
-              width: 40,
-              height: 40,
-              child: GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportDetailScreen(reportId: report.id))),
-                child: _buildMarkerIcon(report.category),
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(initialCenter: _currentPos, initialZoom: 14, onTap: _onMapTap,),
+            children: [
+              TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+              MarkerLayer(
+                markers: _reports.map((report) => Marker(
+                  point: LatLng(report.location.latitude, report.location.longitude),
+                  width: 40,
+                  height: 40,
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportDetailScreen(reportId: report.id))),
+                    child: _buildMarkerIcon(report.category),
+                  ),
+                )).toList(),
               ),
-            )).toList(),
+              MarkerLayer(markers: [Marker(point: _currentPos, child: const Icon(Icons.my_location, color: Colors.blue))]),
+            ],
           ),
-          MarkerLayer(markers: [Marker(point: _currentPos, child: const Icon(Icons.my_location, color: Colors.blue))]),
+
+          // NEU: Ein Slider-Widget über der Karte, um den Radius zu verändern
+          Positioned(
+            top: 10,
+            left: 10,
+            right: 10,
+            child: Card(
+              color: Colors.white.withOpacity(0.9),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  children: [
+                    Text('Radius: ${_currentRadius.toInt()} km', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Slider(
+                        value: _currentRadius,
+                        min: 1,
+                        max: 100,
+                        divisions: 99,
+                        label: '${_currentRadius.toInt()} km',
+                        onChanged: (value) {
+                          setState(() {
+                            _currentRadius = value; // Aktualisiert den Wert (für die UI)
+                          });
+                        },
+                        onChangeEnd: (value) {
+                          // Lädt die Reports neu, sobald der Nutzer den Slider loslässt
+                          _loadReports();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(

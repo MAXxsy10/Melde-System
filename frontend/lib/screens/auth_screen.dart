@@ -106,6 +106,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       TextFormField(
                         decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outline)),
                         obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _submit(),
                         validator: (v) => v!.length < 6 ? 'Min 6 chars' : null,
                         onSaved: (v) => _password = v!,
                       ),
